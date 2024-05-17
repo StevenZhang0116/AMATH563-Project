@@ -24,7 +24,7 @@ def relative_mse(y_true, y_pred):
 relative_mse_scorer = make_scorer(relative_mse, greater_is_better=False)
 
 # Load and prepare training and testing data
-data, labels = load_and_prepare_data("toy_quadratic_data_iter_10000_order_100.npy")
+data, labels = load_and_prepare_data("toy_quadratic_data_iter_10000_order_10.npy")
 x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
 # Scale the data
@@ -39,6 +39,7 @@ x_test_pca = pca.transform(x_test_scaled)
 
 # Calculate the median of pairwise distances for RBF kernel gamma
 median_dist = np.median(np.sqrt(np.sum(np.square(x_train_pca), axis=1)))
+print(median_dist)
 
 # Train fixed polynomial kernel
 poly_model = KernelRidge(kernel='poly', alpha=0.1, degree=2, coef0=1)
@@ -47,10 +48,10 @@ poly_pred = poly_model.predict(x_test_pca)
 
 # RBF model with RandomizedSearchCV using relative MSE scorer
 param_dist_rbf = {
-    'gamma': stats.uniform((2 * (5 * median_dist)**2), 10*(2 * (5 * median_dist)**2))
+    'gamma': stats.uniform((1/(5*median_dist)**2), 1/(median_dist)**2)
 }
 rbf_model = RandomizedSearchCV(KernelRidge(kernel='rbf', alpha=1), param_distributions=param_dist_rbf,
-                               n_iter=100, cv=5, scoring=relative_mse_scorer)
+                               n_iter=10, cv=10, scoring=relative_mse_scorer)
 rbf_model.fit(x_train_pca, y_train)
 rbf_pred = rbf_model.predict(x_test_pca)
 
